@@ -26,13 +26,15 @@
 static void open_display()              __attribute__ ((unused));
 static void close_display()             __attribute__ ((unused));
 static void set_status(char *str);
+static const char *percent_bar(int p);
 static void get_datetime(char *dstbuf);
 static void get_load_average(char *dstla);
 static int get_vol(void);
 
 static Display *dpy                     __attribute__ ((unused));
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int vol = 0;
     char  la[STRSZ] = { 0 };    /* load average   */
@@ -59,7 +61,8 @@ int main(int argc, char **argv)
         get_load_average(la);
         get_datetime(dt);                       /* date/time */
 
-        snprintf(stat, STRSZ, "%u | %s | %s", vol, la, dt);
+        snprintf(stat, STRSZ, "| vol:%s | %s | %s",
+                percent_bar(vol), la, dt);
         set_status(stat);
     }
 
@@ -69,7 +72,8 @@ int main(int argc, char **argv)
     return 0;
 }
 
-static void open_display()
+void
+open_display()
 {
 #ifndef DEBUG
     if (!(dpy = XOpenDisplay(NULL)))
@@ -79,7 +83,8 @@ static void open_display()
     signal(SIGTERM, close_display);
 }
 
-static void close_display()
+void
+close_display()
 {
 #ifndef DEBUG
     XCloseDisplay(dpy);
@@ -87,7 +92,8 @@ static void close_display()
     exit(0);
 }
 
-static void set_status(char *str)
+void
+set_status(char *str)
 {
 #ifndef DEBUG
     XStoreName(dpy, DefaultRootWindow(dpy), str);
@@ -97,7 +103,16 @@ static void set_status(char *str)
 #endif
 }
 
-static void get_load_average(char *dstla)
+const char *
+percent_bar(int p) {
+    const char *s[] = {
+        "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"
+    };
+    return s[(p * 7) / 100];
+}
+
+void
+get_load_average(char *dstla)
 {
     double avgs[3];
 
@@ -109,14 +124,16 @@ static void get_load_average(char *dstla)
     snprintf(dstla, STRSZ, "%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
-static void get_datetime(char *dstbuf)
+void
+get_datetime(char *dstbuf)
 {
     time_t rawtime;
     time(&rawtime);
     snprintf(dstbuf, DTBUFSZ, "%s", ctime(&rawtime));
 }
 
-static int get_vol(void)
+int
+get_vol(void)
 {
     long min, max, volume = 0;
     snd_mixer_t *handle;
