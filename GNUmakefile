@@ -5,15 +5,20 @@ HDR = ${wildcard *.h}
 CC = gcc
 
 REVCNT = $(shell git rev-list --count master 2>/dev/null)
-REVHASH = $(shell git log -1 --format="%h" 2>/dev/null)
 ifeq (${REVCNT},)
 	VERSION = devel
 else
+	REVHASH = $(shell git log -1 --format="%h" 2>/dev/null)
 	VERSION = "${REVCNT}.${REVHASH}"
 endif
 
-CFLAGS = -Wall
-LFLAGS =
+X11INC = /usr/X11R6/include
+INCLUDES = -I$(X11INC)
+LIBS = -L/usr/X11R6/lib -lX11
+
+CFLAGS = -Wall $(INCLUDES)
+LFLAGS = $(LIBS)
+
 INSTALL = install
 INSTALL_ARGS = -o root -g root -m 755
 INSTALL_DIR = /usr/local/bin/
@@ -24,12 +29,11 @@ endif
 
 all: debug
 
-debug: CFLAGS += -g -DDEBUG
-debug: LFLAGS += -g -lX11
+debug: CFLAGS += -g -ggdb -DDEBUG
+debug: LFLAGS += -g
 debug: build
 
 release: CFLAGS += -O3
-release: LFLAGS += -lX11
 release: clean build
 
 build: build_host.h ${TARGET}
